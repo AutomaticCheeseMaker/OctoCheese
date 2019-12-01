@@ -1,0 +1,52 @@
+<form class="form-horizontal">
+    <p>
+        This plugin looks out for the M950 command and uses it to toggle stirring on or off. It also provides a M951 command for pausing gcode processing. Set the axis and the stepper positions to move between below. The plugin will handle moving the stepper between these two positions continuously, waiting the set interval below between each forward and backward command.
+    </p>
+    <p>
+        M950 S0 - Stop Stirring<br/>
+        M950 S1 - Start Stirring<br/>
+        M951 S100 - Pause GCode for 100 seconds (whilst maintaining stir and temperature)<br/>
+    </p>
+    <h4>Stir Stepper</h4>
+    <div class="control-group">
+        <label class="control-label">Stepper Axis</label>
+        <div class="controls">
+            <div class="input-append">
+                <input type="text" step="any" class="input-mini text-right" data-bind="value: settings.plugins.OctoCheese.stepper">
+            </div>
+            <span class="help-inline">The axis the stirrer is attached to. X, Y, Z or E.</span>
+        </div>
+        <label class="control-label">Stepper Start</label>
+        <div class="controls">
+            <div class="input-append">
+                <input type="number" step="any" class="input-mini text-right" data-bind="value: settings.plugins.OctoCheese.stepperStart">
+                <span class="add-on">mm</span>
+            </div>
+            <span class="help-inline">The coordinate to start stirring from</span>
+        </div>
+        <label class="control-label">Stepper End</label>
+        <div class="controls">
+            <div class="input-append">
+                <input type="number" step="any" class="input-mini text-right" data-bind="value: settings.plugins.OctoCheese.stepperEnd">
+                <span class="add-on">mm</span>
+            </div>
+            <span class="help-inline">The coordinate to stir to</span>
+        </div>
+        <label class="control-label">Stirring Interval</label>
+        <div class="controls">
+            <div class="input-append">
+                <input type="number" step="any" min="1" class="input-mini text-right" data-bind="value: settings.plugins.OctoCheese.interval">
+                <span class="add-on">s</span>
+            </div>
+            <span class="help-inline">How long to wait after issuing move command before issuing the reverse move command</span>
+        </div>
+        <label class="control-label">Stirring Speed</label>
+        <div class="controls">
+            <div class="input-append">
+                <input type="number" step="any" min="1" class="input-mini text-right" data-bind="value: settings.plugins.OctoCheese.stepperSpeed">
+                <span class="add-on">mm/min</span>
+            </div>
+            <span class="help-inline">The speed to move the stirrer</span>
+        </div>
+    </div>
+</form>
