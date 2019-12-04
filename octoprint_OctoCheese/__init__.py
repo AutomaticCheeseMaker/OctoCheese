@@ -13,36 +13,88 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 	def __init__(self):
 		self._stirringTimer = None
 		self._cheesePause = None
+		self._cheeseTempPause = None
 		self._stirringOn = False
 		self._directionForward = False
+		self._cheeseTemp = -1
+		self._cheeseTempSensor = ""
 
 	def catch_m950(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
+		# M950 S1 - Turn Stirrer on
+		# M950 S0 - Turn Stirrer off
 		if gcode and gcode == "M950":
 			if cmd == "M950 S1":
 				self._logger.debug(u"Stirring ON")
-				cmd = ""
+				cmd = "M118 E1 Stirring ON"
 				self._stirringOn = True
 				self._restartTimer()
 			elif cmd == "M950 S0":
 				self._logger.debug(u"Stirring OFF")
-				cmd = ""
+				cmd = "M118 E1 Stirring OFF"
 				self._stirringOn = False
 				self._restartTimer()
 			else:
 				self._logger.debug(u"Invalid Stirring Command")
-		# M951 S100
+				cmd = "M118 E1 Invalid M950 command"
+		# M951 S100 - Wait 100s before continuing print
 		elif gcode and gcode == "M951":
 			parts = cmd.split(" ")
-			if len(parts) != 2 or parts[1][0] != "S":
-				self._logger.debug(u"Invalid Stirring Pause")
-			else:
-				self._printer.set_job_on_hold(True)
-				pauseInSeconds = int(parts[1][1:])
+			if len(parts) == 1:
 				if self._cheesePause != None:
 					self.cheesePauseCallback()
+				self._printer.set_job_on_hold(False)
+				cmd = "M118 E1 Cancelling Timer - Resuming Print"
+			elif len(parts) > 2 or parts[1][0] != "S":
+				self._logger.debug(u"Invalid Stirring Pause")
+				cmd = "M118 E1 Invalid M951 command"
+			else:
+				pauseInSeconds = int(parts[1][1:])
+				cmd = "M118 E1 Sleeping for {0}s".format(pauseInSeconds)
+				if self._cheesePause != None:
+					self.cheesePauseCallback()
+				self._printer.set_job_on_hold(True)
 				self._cheesePause = ResettableTimer(pauseInSeconds, self.cheesePauseCallback)
 				self._cheesePause.start()
+		# M952 B38 - Wait for bed to hit 38C
+		# M952 H38 - Wait for hotend to hit 38C
+		elif gcode and gcode == "M952":
+			parts = cmd.split(" ")
+			if len(parts) == 1:
+				if self._cheeseTempPause != None:
+					self.cheesePauseTempFinish()
+				self._printer.set_job_on_hold(False)
+				cmd = "M118 E1 Cancelling Temp Wait - Resuming Print"
+			if len(parts) > 2 or (parts[1][0] != "B" and parts[1][0] != "H"):
+				self._logger.debug(u"Invalid Stirring Pause")
+				cmd = "M118 E1 Invalid M952 command"
+			else:
+				if self._cheeseTempPause != None:
+					self.cheesePauseTempFinish()
+				self._cheeseTemp = int(parts[1][1:])
+				self._cheeseTempSensor = parts[1][:1]
+				cmd = "M118 E1 Waiting for {0}C on {1}".format(self._cheeseTemp, self._cheeseTempSensor)
+				self._printer.set_job_on_hold(True)
+				self._cheeseTempPause = RepeatedTimer(10, self.cheesePauseTempCallback, None, None, True)
+				self._cheeseTempPause.start()
 		return cmd,
+
+	def cheesePauseTempFinish(self):
+		self._printer.set_job_on_hold(False)
+		self._cheeseTempPause.cancel()
+		self._cheeseTempPause = None
+		self._cheeseTemp = -1
+		self._cheeseTempSensor = ""
+
+	def cheesePauseTempCallback(self):
+		temperatures = self._printer.get_current_temperatures()
+		if self._cheeseTempSensor !== "" or self._cheeseTemp == -1:
+			self.cheesePauseTempFinish()
+        if temperatures != {}:
+			if self._cheeseTempSensor == "B" and float(temperatures.get("bed").get("actual")) >= self._cheeseTemp:
+				self.cheesePauseTempFinish()
+			elif self._cheeseTempSensor == "H" and float(temperatures.get("tool0").get("actual")) >= self._cheeseTemp:
+				self.cheesePauseTempFinish()
+
 
 	def cheesePauseCallback(self):
 		self._printer.set_job_on_hold(False)
