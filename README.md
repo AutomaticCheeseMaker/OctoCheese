@@ -7,7 +7,7 @@ OctoPrint Plugin that controls a cheese stirring device using Marlin
 1. Install via the bundled [Plugin Manager](https://github.com/foosel/OctoPrint/wiki/Plugin:-Plugin-Manager)
 or manually using this URL:
 
-    	https://github.com/google/OctoCheese/archive/master.zip
+    	https://github.com/thomaspreece/OctoCheese/archive/master.zip
 
 1. Restart OctoPrint
 
