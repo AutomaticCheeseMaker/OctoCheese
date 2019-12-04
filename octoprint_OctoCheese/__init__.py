@@ -72,11 +72,11 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 			stepper = self._settings.get(['stepper'])
 			if (self._directionForward):
 				self._printer.commands([
-					'G0 '+stepper+stepperStart+' F'+stepperSpeed
+					'G0 {0}{1} F{2}'.format(stepper,stepperStart,stepperSpeed)
 				])
 			else:
 				self._printer.commands([
-					'G0 '+stepper+stepperEnd
+					'G0 {0}{1} F{2}'.format(stepper,stepperEnd,stepperSpeed)
 				])
 			self._directionForward = (not self._directionForward)
 
