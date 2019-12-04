@@ -37,7 +37,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 				self._logger.debug(u"Invalid Stirring Pause")
 			else:
 				self._printer.set_job_on_hold(True)
-				pauseInSeconds = int(parts[1][:1])
+				pauseInSeconds = int(parts[1][1:])
 				if self._cheesePause != None:
 					self.cheesePauseCallback()
 				self._cheesePause = ResettableTimer(pauseInSeconds, self.cheesePauseCallback)
