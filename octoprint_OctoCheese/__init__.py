@@ -100,8 +100,6 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 
 	# Used by M953
 	def cheeseMqttPauseEnd(self, topic, message, retained=None, qos=None, *args, **kwargs):
-		print(topic)
-		print(message)
 		if message == "0":
 			self._printer.set_job_on_hold(False)
 			self._printer.commands([
