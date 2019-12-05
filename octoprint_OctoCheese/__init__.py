@@ -4,8 +4,8 @@ import time
 import octoprint.plugin
 from octoprint.util import RepeatedTimer, ResettableTimer
 
-MQTT_OCTOCHEESE_PAUSED="octoprint/plugin/OctoCheese/paused"
-MQTT_OCTOCHEESE_MESSAGE="octoprint/plugin/OctoCheese/message"
+MQTT_OCTOCHEESE_PAUSED="octoPrint/plugin/OctoCheese/paused"
+MQTT_OCTOCHEESE_MESSAGE="octoPrint/plugin/OctoCheese/message"
 
 class OctoCheese(octoprint.plugin.AssetPlugin,
 					octoprint.plugin.SettingsPlugin,
@@ -71,7 +71,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 					self.cheeseTempPauseEnd()
 				self._printer.set_job_on_hold(False)
 				cmd = "M118 E1 Cancelling Temp Wait - Resuming Print"
-			if len(parts) > 2 or (parts[1][0] != "B" and parts[1][0] != "H"):
+			elif len(parts) > 2 or (parts[1][0] != "B" and parts[1][0] != "H"):
 				self._logger.debug(u"Invalid Stirring Pause")
 				cmd = "M118 E1 Invalid M952 command"
 			else:
@@ -87,7 +87,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 			if self.mqtt:
 				parts = cmd.split(" ")
 				if len(parts) > 1:
-					stringToSend = parts[1:]
+					stringToSend = " ".join(parts[1:])
 					self.mqtt_publish(MQTT_OCTOCHEESE_MESSAGE, stringToSend)
 					self.mqtt_publish(MQTT_OCTOCHEESE_PAUSED, 1)
 					self._printer.set_job_on_hold(True)
@@ -100,21 +100,26 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 
 	# Used by M953
 	def cheeseMqttPauseEnd(self, topic, message, retained=None, qos=None, *args, **kwargs):
-		if message == 0:
+		print(topic)
+		print(message)
+		if message == "0":
 			self._printer.set_job_on_hold(False)
+			self._printer.commands([
+				"M118 E1 MQTT Cancelled user wait"
+			])
 
 	# Used by M952
 	def cheeseTempPauseCallback(self):
-		temperatures = self._printer.get_current_temperatures()
-		if self._cheeseTempSensor !== "" or self._cheeseTemp == -1:
+		if (self._cheeseTempSensor != "" or self._cheeseTemp == -1):
 			self.cheeseTempPauseEnd()
-        if temperatures != {}:
-			if self._cheeseTempSensor == "B" and float(temperatures.get("bed").get("actual")) >= self._cheeseTemp:
+		temps = self._printer.get_current_temperatures()
+		if temps != {}:
+			if self._cheeseTempSensor == "B" and float(temps.get("bed").get("actual")) >= self._cheeseTemp:
 				if self._cheeseTempCount >= 2:
 					self.cheeseTempPauseEnd()
 				else:
 					self._cheeseTempCount += 1
-			elif self._cheeseTempSensor == "H" and float(temperatures.get("tool0").get("actual")) >= self._cheeseTemp:
+			elif self._cheeseTempSensor == "H" and float(temps.get("tool0").get("actual")) >= self._cheeseTemp:
 				if self._cheeseTempCount >= 2:
 					self.cheeseTempPauseEnd()
 				else:
