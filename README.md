@@ -23,6 +23,6 @@ Configure via the OctoPrint settings UI.
 - M950 S1   - Turn stirrer on
 - M951 S100 - Pause octoprint print job for 100 seconds
 - M951      - Cancel previously issued wait (from OctoPrint Terminal only)
-- M952 B38  - Pause octoprint print job until "bed" temperature is 38C
-- M952 H38  - Pause octoprint print job until "hotend" temperature is 38C
+- M952 B38  - Pause octoprint print job until "bed" temperature is over 38C for at least 9s
+- M952 H38  - Pause octoprint print job until "hotend" temperature is over 38C for at least 9s
 - M952      - Cancel previously issued temperature wait (from OctoPrint Terminal only)

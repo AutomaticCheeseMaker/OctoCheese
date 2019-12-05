@@ -4,6 +4,9 @@ import time
 import octoprint.plugin
 from octoprint.util import RepeatedTimer, ResettableTimer
 
+MQTT_OCTOCHEESE_PAUSED="octoprint/plugin/OctoCheese/paused"
+MQTT_OCTOCHEESE_MESSAGE="octoprint/plugin/OctoCheese/message"
+
 class OctoCheese(octoprint.plugin.AssetPlugin,
 					octoprint.plugin.SettingsPlugin,
 					octoprint.plugin.ShutdownPlugin,
@@ -17,7 +20,11 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 		self._stirringOn = False
 		self._directionForward = False
 		self._cheeseTemp = -1
+		self._cheeseTempCount = 0
 		self._cheeseTempSensor = ""
+		self.mqtt = False
+		self.mqtt_publish = lambda *args, **kwargs: None
+		self.mqtt_subscribe = lambda *args, **kwargs: None
 
 	def catch_m950(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
 		# M950 S1 - Turn Stirrer on
@@ -27,12 +34,12 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 				self._logger.debug(u"Stirring ON")
 				cmd = "M118 E1 Stirring ON"
 				self._stirringOn = True
-				self._restartTimer()
+				self.restartStirringTimer()
 			elif cmd == "M950 S0":
 				self._logger.debug(u"Stirring OFF")
 				cmd = "M118 E1 Stirring OFF"
 				self._stirringOn = False
-				self._restartTimer()
+				self.restartStirringTimer()
 			else:
 				self._logger.debug(u"Invalid Stirring Command")
 				cmd = "M118 E1 Invalid M950 command"
@@ -41,7 +48,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 			parts = cmd.split(" ")
 			if len(parts) == 1:
 				if self._cheesePause != None:
-					self.cheesePauseCallback()
+					self.cheesePauseEnd()
 				self._printer.set_job_on_hold(False)
 				cmd = "M118 E1 Cancelling Timer - Resuming Print"
 			elif len(parts) > 2 or parts[1][0] != "S":
@@ -51,9 +58,9 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 				pauseInSeconds = int(parts[1][1:])
 				cmd = "M118 E1 Sleeping for {0}s".format(pauseInSeconds)
 				if self._cheesePause != None:
-					self.cheesePauseCallback()
+					self.cheesePauseEnd()
 				self._printer.set_job_on_hold(True)
-				self._cheesePause = ResettableTimer(pauseInSeconds, self.cheesePauseCallback)
+				self._cheesePause = ResettableTimer(pauseInSeconds, self.cheesePauseEnd)
 				self._cheesePause.start()
 		# M952 B38 - Wait for bed to hit 38C
 		# M952 H38 - Wait for hotend to hit 38C
@@ -61,7 +68,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 			parts = cmd.split(" ")
 			if len(parts) == 1:
 				if self._cheeseTempPause != None:
-					self.cheesePauseTempFinish()
+					self.cheeseTempPauseEnd()
 				self._printer.set_job_on_hold(False)
 				cmd = "M118 E1 Cancelling Temp Wait - Resuming Print"
 			if len(parts) > 2 or (parts[1][0] != "B" and parts[1][0] != "H"):
@@ -69,39 +76,68 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 				cmd = "M118 E1 Invalid M952 command"
 			else:
 				if self._cheeseTempPause != None:
-					self.cheesePauseTempFinish()
+					self.cheeseTempPauseEnd()
 				self._cheeseTemp = int(parts[1][1:])
 				self._cheeseTempSensor = parts[1][:1]
 				cmd = "M118 E1 Waiting for {0}C on {1}".format(self._cheeseTemp, self._cheeseTempSensor)
 				self._printer.set_job_on_hold(True)
-				self._cheeseTempPause = RepeatedTimer(10, self.cheesePauseTempCallback, None, None, True)
+				self._cheeseTempPause = RepeatedTimer(3, self.cheeseTempPauseCallback, None, None, True)
 				self._cheeseTempPause.start()
+		elif gcode and gcode == "M953":
+			if self.mqtt:
+				parts = cmd.split(" ")
+				if len(parts) > 1:
+					stringToSend = parts[1:]
+					self.mqtt_publish(MQTT_OCTOCHEESE_MESSAGE, stringToSend)
+					self.mqtt_publish(MQTT_OCTOCHEESE_PAUSED, 1)
+					self._printer.set_job_on_hold(True)
+					cmd = "M118 E1 Waiting for user to finish: {0}".format(stringToSend)
+				else:
+					self.mqtt_publish(MQTT_OCTOCHEESE_PAUSED, 0)
+					self._printer.set_job_on_hold(False)
+					cmd = "M118 E1 Cancelled user wait"
 		return cmd,
 
-	def cheesePauseTempFinish(self):
+	# Used by M953
+	def cheeseMqttPauseEnd(self, topic, message, retained=None, qos=None, *args, **kwargs):
+		if message == 0:
+			self._printer.set_job_on_hold(False)
+
+	# Used by M952
+	def cheeseTempPauseCallback(self):
+		temperatures = self._printer.get_current_temperatures()
+		if self._cheeseTempSensor !== "" or self._cheeseTemp == -1:
+			self.cheeseTempPauseEnd()
+        if temperatures != {}:
+			if self._cheeseTempSensor == "B" and float(temperatures.get("bed").get("actual")) >= self._cheeseTemp:
+				if self._cheeseTempCount >= 2:
+					self.cheeseTempPauseEnd()
+				else:
+					self._cheeseTempCount += 1
+			elif self._cheeseTempSensor == "H" and float(temperatures.get("tool0").get("actual")) >= self._cheeseTemp:
+				if self._cheeseTempCount >= 2:
+					self.cheeseTempPauseEnd()
+				else:
+					self._cheeseTempCount += 1
+			else:
+				self._cheeseTempCount = 0
+
+	def cheeseTempPauseEnd(self):
 		self._printer.set_job_on_hold(False)
 		self._cheeseTempPause.cancel()
 		self._cheeseTempPause = None
 		self._cheeseTemp = -1
+		self._cheeseTempCount = 0
 		self._cheeseTempSensor = ""
 
-	def cheesePauseTempCallback(self):
-		temperatures = self._printer.get_current_temperatures()
-		if self._cheeseTempSensor !== "" or self._cheeseTemp == -1:
-			self.cheesePauseTempFinish()
-        if temperatures != {}:
-			if self._cheeseTempSensor == "B" and float(temperatures.get("bed").get("actual")) >= self._cheeseTemp:
-				self.cheesePauseTempFinish()
-			elif self._cheeseTempSensor == "H" and float(temperatures.get("tool0").get("actual")) >= self._cheeseTemp:
-				self.cheesePauseTempFinish()
-
-
-	def cheesePauseCallback(self):
+	# Used by M951
+	def cheesePauseEnd(self):
 		self._printer.set_job_on_hold(False)
 		self._cheesePause.cancel()
 		self._cheesePause = None
 
-	def _restartTimer(self):
+	# Used by M950
+	def restartStirringTimer(self):
 		# stop the timer
 		if self._stirringTimer:
 			self._logger.debug(u"Stopping Stir Timer")
@@ -111,12 +147,12 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 		interval = self._settings.get_int(['interval'])
 		if self._stirringOn and interval:
 			self._logger.debug(u"Starting Stir Timer")
-			self._stirringTimer = RepeatedTimer(interval, self.StirTimerCallback, None, None, True)
+			self._stirringTimer = RepeatedTimer(interval, self.stirTimerCallback, None, None, True)
 			self._stirringTimer.start()
 
-	def StirTimerCallback(self):
+	def stirTimerCallback(self):
 		if (not self._stirringOn):
-			self._restartTimer()
+			self.restartStirringTimer()
 		else:
 			stepperStart = self._settings.get_int(['stepperStart'])
 			stepperEnd = self._settings.get_int(['stepperEnd'])
@@ -136,14 +172,22 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 
 	def on_after_startup(self):
 		self._logger.info(u"Starting OctoCheese")
-		self._restartTimer()
+		self.restartStirringTimer()
+
+		helpers = self._plugin_manager.get_helpers("mqtt", "mqtt_publish", "mqtt_subscribe")
+		if helpers:
+			if "mqtt_publish" in helpers and "mqtt_subscribe" in helpers:
+				self.mqtt = True
+				self.mqtt_publish = helpers["mqtt_publish"]
+				self.mqtt_subscribe = helpers["mqtt_subscribe"]
+				self.mqtt_subscribe(MQTT_OCTOCHEESE_PAUSED, self.cheeseMqttPauseEnd)
 
 	##-- ShutdownPlugin hooks
 
 	def on_shutdown(self):
 		self._logger.info(u"Stopping OctoCheese")
 		self._stirringOn = False
-		self._restartTimer()
+		self.restartStirringTimer()
 
 
 	##-- AssetPlugin hooks
@@ -172,7 +216,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 
 	def on_settings_initialized(self):
 		self._logger.debug(u"OctoCheese on_settings_initialized()")
-		self._restartTimer()
+		self.restartStirringTimer()
 
 	def on_settings_save(self, data):
 		# make sure we don't get negative values
@@ -184,7 +228,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 		self._logger.debug(u"OctoCheese on_settings_save(%r)" % (data,))
 
 		octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
-		self._restartTimer()
+		self.restartStirringTimer()
 
 	##~~ Softwareupdate hook
 
