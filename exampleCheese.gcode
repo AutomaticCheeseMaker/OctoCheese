@@ -1,11 +1,11 @@
 ; OctoCheese GCode for Halloumi Cheese described at https://www.youtube.com/watch?v=PPNQmV7roos&t=29s
 
 ; Put 8L milk in
-; Put 2ml (1/2 tsp) Sodium Chloride in
+M954 S1 CALCIUM_CHLORIDE; Put 2ml (1/2 tsp) Calcium Chloride in
 M950 S1; Start stirring
 M104 S32; Heat to 32C
-M952 H38; Wait to hit 32C
-M953 RENNET; Put 2ml (1/2 tsp) liquid rennet in
+M952 H32; Wait to hit 32C
+M954 S1 RENNET; Put 2ml (1/2 tsp) liquid rennet in
 
 M951 S60; Stir for a minute
 M950 S0; Stop stirring

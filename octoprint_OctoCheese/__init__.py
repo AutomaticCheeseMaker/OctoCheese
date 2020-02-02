@@ -44,6 +44,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 				self._logger.debug(u"Invalid Stirring Command")
 				cmd = "M118 E1 Invalid M950 command"
 		# M951 S100 - Wait 100s before continuing print
+		# M951      - Cancel wait
 		elif gcode and gcode == "M951":
 			parts = cmd.split(" ")
 			if len(parts) == 1:
@@ -64,6 +65,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 				self._cheesePause.start()
 		# M952 B38 - Wait for bed to hit 38C
 		# M952 H38 - Wait for hotend to hit 38C
+		# M952     - Cancel wait
 		elif gcode and gcode == "M952":
 			parts = cmd.split(" ")
 			if len(parts) == 1:
@@ -83,6 +85,8 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 				self._printer.set_job_on_hold(True)
 				self._cheeseTempPause = RepeatedTimer(3, self.cheeseTempPauseCallback, None, None, True)
 				self._cheeseTempPause.start()
+		# M953 STRING - Send MQTT String and wait for user
+		# M953        - Continue if a wait has been issued
 		elif gcode and gcode == "M953":
 			if self.mqtt:
 				parts = cmd.split(" ")
@@ -96,6 +100,40 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 					self.mqtt_publish(MQTT_OCTOCHEESE_PAUSED, 0)
 					self._printer.set_job_on_hold(False)
 					cmd = "M118 E1 Cancelled user wait"
+		# M954 S1 RENNET              - Release Rennet
+		# M954 S1 CALCIUM_CHLORIDE    - Release Calcium Chloride
+		# M954 S1 ANNATTO             - Release Annatto
+		# M954 S1 CULTURE             - Release Culture
+		# M954 S0 RENNET              - Unrelease Rennet
+		# M954 S0 CALCIUM_CHLORIDE    - Unrelease Calcium Chloride
+		# M954 S0 ANNATTO             - Unrelease Annatto
+		# M954 S0 CULTURE             - Unrelease Culture
+		elif gcode and gcode == "M954":
+			if len(parts) != 3 or parts[1][0] != "S":
+				self._logger.debug(u"Invalid Servo Release Command")
+				cmd = "M118 E1 Invalid M954 command"
+			releaseType = " ".join(parts[2:])
+			release = int(parts[1][1:])
+
+			servoPosition = 0
+			servoNumber = 0
+
+			if release == 0:
+				servoPosition = 180
+			else:
+				servoPosition = 0
+
+			if releaseType == "RENNET":
+				servoNumber = self._settings.get_int(['rennetServo'])
+			elif releaseType == "CALCIUM_CHLORIDE":
+				servoNumber = self._settings.get_int(['calciumChlorideServo'])
+			elif releaseType == "ANNATTO":
+				servoNumber = self._settings.get_int(['annattoServo'])
+			elif releaseType == "CULTURE":
+				servoNumber = self._settings.get_int(['cultureServo'])
+
+			cmd = "M280 P{0} S{1}".format(servoNumber,servoPosition)
+
 		return cmd,
 
 	# Used by M953
@@ -214,7 +252,11 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 			stepper="X",
 			stepperSpeed=1200,
 			stepperStart=0,
-			stepperEnd=100
+			stepperEnd=100,
+			rennetServo=0,
+			calciumChlorideServo=1,
+			annattoServo=2,
+			cultureServo=3
 		)
 
 	def on_settings_initialized(self):
@@ -225,6 +267,9 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 		# make sure we don't get negative values
 		for k in ('interval', 'stepperSpeed'):
 			if data.get(k): data[k] = max(0, int(data[k]))
+		# make sure we have a value between 0 and 3
+		for k in ('rennetServo', 'calciumChlorideServo', 'annattoServo', 'cultureServo'):
+			if data.get(k): data[k] = min(max(0, int(data[k])), 3)
 		if (not (data.get('stepper') == 'X' or data.get('stepper') == 'Y' or data.get('stepper') == 'Z' or data.get('stepper') == 'E')):
 			data['stepper'] = 'X'
 
