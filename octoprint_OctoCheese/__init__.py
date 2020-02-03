@@ -140,9 +140,11 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 
 			retCmd = [
 				"M118 E1 {1}: {0}".format(releaseType, "Resetting" if release == 0 else "Releasing")
-				"M280 P{0} S{1}".format(servoNumber,servoPosition),
-				"M281 P{0}".format(servoNumber)
+				"M280 P{0} S{1}".format(servoNumber,servoPosition)
 			]
+
+			if release != 0:
+				retCmd.append("M281 P{0}".format(servoNumber))
 
 		return retCmd
 
