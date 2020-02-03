@@ -37,7 +37,11 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 				self.restartStirringTimer()
 			elif cmd == "M950 S0":
 				self._logger.debug(u"Stirring OFF")
-				cmd = "M118 E1 Stirring OFF"
+				stepper = self._settings.get(['stepper'])
+				cmd = [
+					"M118 E1 Stirring OFF",
+					"M18 {0}".format(stepper)
+				]
 				self._stirringOn = False
 				self.restartStirringTimer()
 			else:
@@ -109,6 +113,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 		# M954 S0 ANNATTO             - Unrelease Annatto
 		# M954 S0 CULTURE             - Unrelease Culture
 		elif gcode and gcode == "M954":
+			parts = cmd.split(" ")
 			if len(parts) != 3 or parts[1][0] != "S":
 				self._logger.debug(u"Invalid Servo Release Command")
 				cmd = "M118 E1 Invalid M954 command"
