@@ -138,7 +138,11 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 			elif releaseType == "CULTURE":
 				servoNumber = self._settings.get_int(['cultureServo'])
 
-			retCmd = "M280 P{0} S{1}".format(servoNumber,servoPosition)
+			retCmd = [
+				"M118 E1 {1}: {0}".format(releaseType, "Resetting" if release == 0 else "Releasing")
+				"M280 P{0} S{1}".format(servoNumber,servoPosition),
+				"M281 P{0}".format(servoNumber)
+			]
 
 		return retCmd
 
