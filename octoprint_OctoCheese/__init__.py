@@ -27,18 +27,19 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 		self.mqtt_subscribe = lambda *args, **kwargs: None
 
 	def catch_m950(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
+		retCmd = cmd
 		# M950 S1 - Turn Stirrer on
 		# M950 S0 - Turn Stirrer off
 		if gcode and gcode == "M950":
 			if cmd == "M950 S1":
 				self._logger.debug(u"Stirring ON")
-				cmd = "M118 E1 Stirring ON"
+				retCmd = "M118 E1 Stirring ON"
 				self._stirringOn = True
 				self.restartStirringTimer()
 			elif cmd == "M950 S0":
 				self._logger.debug(u"Stirring OFF")
 				stepper = self._settings.get(['stepper'])
-				cmd = [
+				retCmd = [
 					"M118 E1 Stirring OFF",
 					"M18 {0}".format(stepper)
 				]
@@ -46,7 +47,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 				self.restartStirringTimer()
 			else:
 				self._logger.debug(u"Invalid Stirring Command")
-				cmd = "M118 E1 Invalid M950 command"
+				retCmd = "M118 E1 Invalid M950 command"
 		# M951 S100 - Wait 100s before continuing print
 		# M951      - Cancel wait
 		elif gcode and gcode == "M951":
@@ -55,13 +56,13 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 				if self._cheesePause != None:
 					self.cheesePauseEnd()
 				self._printer.set_job_on_hold(False)
-				cmd = "M118 E1 Cancelling Timer - Resuming Print"
+				retCmd = "M118 E1 Cancelling Timer - Resuming Print"
 			elif len(parts) > 2 or parts[1][0] != "S":
 				self._logger.debug(u"Invalid Stirring Pause")
-				cmd = "M118 E1 Invalid M951 command"
+				retCmd = "M118 E1 Invalid M951 command"
 			else:
 				pauseInSeconds = int(parts[1][1:])
-				cmd = "M118 E1 Sleeping for {0}s".format(pauseInSeconds)
+				retCmd = "M118 E1 Sleeping for {0}s".format(pauseInSeconds)
 				if self._cheesePause != None:
 					self.cheesePauseEnd()
 				self._printer.set_job_on_hold(True)
@@ -76,16 +77,16 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 				if self._cheeseTempPause != None:
 					self.cheeseTempPauseEnd()
 				self._printer.set_job_on_hold(False)
-				cmd = "M118 E1 Cancelling Temp Wait - Resuming Print"
+				retCmd = "M118 E1 Cancelling Temp Wait - Resuming Print"
 			elif len(parts) > 2 or (parts[1][0] != "B" and parts[1][0] != "H"):
 				self._logger.debug(u"Invalid Stirring Pause")
-				cmd = "M118 E1 Invalid M952 command"
+				retCmd = "M118 E1 Invalid M952 command"
 			else:
 				if self._cheeseTempPause != None:
 					self.cheeseTempPauseEnd()
 				self._cheeseTemp = int(parts[1][1:])
 				self._cheeseTempSensor = parts[1][:1]
-				cmd = "M118 E1 Waiting for {0}C on {1}".format(self._cheeseTemp, self._cheeseTempSensor)
+				retCmd = "M118 E1 Waiting for {0}C on {1}".format(self._cheeseTemp, self._cheeseTempSensor)
 				self._printer.set_job_on_hold(True)
 				self._cheeseTempPause = RepeatedTimer(3, self.cheeseTempPauseCallback, None, None, True)
 				self._cheeseTempPause.start()
@@ -99,11 +100,11 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 					self.mqtt_publish(MQTT_OCTOCHEESE_MESSAGE, stringToSend)
 					self.mqtt_publish(MQTT_OCTOCHEESE_PAUSED, 1)
 					self._printer.set_job_on_hold(True)
-					cmd = "M118 E1 Waiting for user to finish: {0}".format(stringToSend)
+					retCmd = "M118 E1 Waiting for user to finish: {0}".format(stringToSend)
 				else:
 					self.mqtt_publish(MQTT_OCTOCHEESE_PAUSED, 0)
 					self._printer.set_job_on_hold(False)
-					cmd = "M118 E1 Cancelled user wait"
+					retCmd = "M118 E1 Cancelled user wait"
 		# M954 S1 RENNET              - Release Rennet
 		# M954 S1 CALCIUM_CHLORIDE    - Release Calcium Chloride
 		# M954 S1 ANNATTO             - Release Annatto
@@ -116,7 +117,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 			parts = cmd.split(" ")
 			if len(parts) != 3 or parts[1][0] != "S":
 				self._logger.debug(u"Invalid Servo Release Command")
-				cmd = "M118 E1 Invalid M954 command"
+				retCmd = "M118 E1 Invalid M954 command"
 			releaseType = " ".join(parts[2:])
 			release = int(parts[1][1:])
 
@@ -137,9 +138,9 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 			elif releaseType == "CULTURE":
 				servoNumber = self._settings.get_int(['cultureServo'])
 
-			cmd = "M280 P{0} S{1}".format(servoNumber,servoPosition)
+			retCmd = "M280 P{0} S{1}".format(servoNumber,servoPosition)
 
-		return cmd,
+		return retCmd
 
 	# Used by M953
 	def cheeseMqttPauseEnd(self, topic, message, retained=None, qos=None, *args, **kwargs):
