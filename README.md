@@ -26,13 +26,14 @@ Configure via the OctoPrint settings UI.
 - M952 B38                  - Pause octoprint print job until "bed" temperature is over 38C for at least 9s
 - M952 H38                  - Pause octoprint print job until "hotend" temperature is over 38C for at least 9s
 - M952                      - Cancel previously issued temperature wait (from OctoPrint Terminal only)
-- M953 STRING               - Send STRING to MQTT and wait for user
-- M953                      - Cancel previously issued wait for user
-- M954 S1 RENNET            - Release Rennet
-- M954 S0 RENNET            - Unrelease Rennet
-- M954 S1 CALCIUM_CHLORIDE  - Release Calcium Chloride
-- M954 S0 CALCIUM_CHLORIDE  - Unrelease Calcium Chloride
-- M954 S1 ANNATTO           - Release Annatto
-- M954 S0 ANNATTO           - Unrelease Annatto
-- M954 S1 CULTURE           - Release Culture
-- M954 S0 CULTURE           - Unrelease Culture
+- M953 STRING               - Send STRING to MQTT
+- M954 STRING               - Send STRING to MQTT and wait for user
+- M954                      - Cancel previously issued wait for user
+- M955 S1 RENNET            - Release Rennet
+- M955 S0 RENNET            - Unrelease Rennet
+- M955 S1 CALCIUM_CHLORIDE  - Release Calcium Chloride
+- M955 S0 CALCIUM_CHLORIDE  - Unrelease Calcium Chloride
+- M955 S1 ANNATTO           - Release Annatto
+- M955 S0 ANNATTO           - Unrelease Annatto
+- M955 S1 CULTURE           - Release Culture
+- M955 S0 CULTURE           - Unrelease Culture

@@ -90,9 +90,20 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 				self._printer.set_job_on_hold(True)
 				self._cheeseTempPause = RepeatedTimer(3, self.cheeseTempPauseCallback, None, None, True)
 				self._cheeseTempPause.start()
-		# M953 STRING - Send MQTT String and wait for user
-		# M953        - Continue if a wait has been issued
+		# M953 STRING - Send MQTT String
 		elif gcode and gcode == "M953":
+			if self.mqtt:
+				parts = cmd.split(" ")
+				if len(parts) > 1:
+					stringToSend = " ".join(parts[1:])
+					self.mqtt_publish(MQTT_OCTOCHEESE_MESSAGE, stringToSend)
+					retCmd = "M118 E1 Sent to MQTT: {0}".format(stringToSend)
+				else:
+					self._logger.debug(u"Invalid Text")
+					retCmd = "M118 E1 Invalid M953 command"
+		# M954 STRING - Send MQTT String and wait for user
+		# M954        - Continue if a wait has been issued
+		elif gcode and gcode == "M954":
 			if self.mqtt:
 				parts = cmd.split(" ")
 				if len(parts) > 1:
@@ -105,19 +116,19 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 					self.mqtt_publish(MQTT_OCTOCHEESE_PAUSED, 0)
 					self._printer.set_job_on_hold(False)
 					retCmd = "M118 E1 Cancelled user wait"
-		# M954 S1 RENNET              - Release Rennet
-		# M954 S1 CALCIUM_CHLORIDE    - Release Calcium Chloride
-		# M954 S1 ANNATTO             - Release Annatto
-		# M954 S1 CULTURE             - Release Culture
-		# M954 S0 RENNET              - Unrelease Rennet
-		# M954 S0 CALCIUM_CHLORIDE    - Unrelease Calcium Chloride
-		# M954 S0 ANNATTO             - Unrelease Annatto
-		# M954 S0 CULTURE             - Unrelease Culture
-		elif gcode and gcode == "M954":
+		# M955 S1 RENNET              - Release Rennet
+		# M955 S1 CALCIUM_CHLORIDE    - Release Calcium Chloride
+		# M955 S1 ANNATTO             - Release Annatto
+		# M955 S1 CULTURE             - Release Culture
+		# M955 S0 RENNET              - Unrelease Rennet
+		# M955 S0 CALCIUM_CHLORIDE    - Unrelease Calcium Chloride
+		# M955 S0 ANNATTO             - Unrelease Annatto
+		# M955 S0 CULTURE             - Unrelease Culture
+		elif gcode and gcode == "M955":
 			parts = cmd.split(" ")
 			if len(parts) != 3 or parts[1][0] != "S":
 				self._logger.debug(u"Invalid Servo Release Command")
-				retCmd = "M118 E1 Invalid M954 command"
+				retCmd = "M118 E1 Invalid M955 command"
 			releaseType = " ".join(parts[2:])
 			release = int(parts[1][1:])
 
@@ -148,7 +159,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 
 		return retCmd
 
-	# Used by M953
+	# Used by M954
 	def cheeseMqttPauseEnd(self, topic, message, retained=None, qos=None, *args, **kwargs):
 		if message == "0":
 			self._printer.set_job_on_hold(False)
