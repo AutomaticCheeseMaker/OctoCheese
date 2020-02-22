@@ -6,7 +6,7 @@ M953 Released Calcium Chloride;
 M950 S1; Start stirring
 M140 S32; Heat to 32C
 M953 Waiting 32C;
-M952 B32; Wait to hit 32C
+M952 H32; Wait to milk hit 32C
 M953 Released Rennet
 M955 S1 RENNET; Put 2ml (1/2 tsp) liquid rennet in
 
