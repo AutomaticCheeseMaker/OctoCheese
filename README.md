@@ -7,8 +7,7 @@ OctoPrint Plugin that controls a cheese making device running Marlin. Provides s
 1. Install via the bundled [Plugin Manager](https://github.com/foosel/OctoPrint/wiki/Plugin:-Plugin-Manager)
 or manually using this URL:
 
-```
-https://github.com/thomaspreece/OctoCheese/archive/master.zip
+  `https://github.com/thomaspreece/OctoCheese/archive/master.zip`
 `
 2. Install MQTT Plugin (Only required for MQTT messages)
 
