@@ -9,22 +9,28 @@ or manually using this URL:
 
 ```
 https://github.com/thomaspreece/OctoCheese/archive/master.zip
-```
+`
+2. Install MQTT Plugin (Only required for MQTT messages)
 
-1. Restart OctoPrint
+3. Restart OctoPrint
 
 ## Configuration
 
-Configure via the OctoPrint settings UI.
+Configure via the OctoPrint settings UI. By default the plugin assumes:
+- The X Axis is the stirring stepper 
+- The water heater is plugged into the "Bed" heater port
+- The water heater temperature is plugged into the "Bed" temperature port 
+- The Milk temperature is plugged into the "Hotend" temperature port
 
 ## Gcode
 
-- M950 S0                   - Turn stirrer off or on
+- M950 S0                   - Turn stirrer off
 - M950 S1                   - Turn stirrer on
 - M951 S100                 - Pause octoprint print job for 100 seconds
 - M951                      - Cancel previously issued wait (from OctoPrint Terminal only)
-- M952 B38                  - Pause octoprint print job until "bed" temperature is over 38C for at least 9s
-- M952 H38                  - Pause octoprint print job until "hotend" temperature is over 38C for at least 9s
+- M140 S38                  - Heat "bed" (water bath) to 38C
+- M952 B38                  - Pause octoprint print job until "bed" temperature (water temperature) is over 38C for at least 9s
+- M952 H38                  - Pause octoprint print job until "hotend" temperature (milk temperature) is over 38C for at least 9s
 - M952                      - Cancel previously issued temperature wait (from OctoPrint Terminal only)
 - M953 STRING               - Send STRING to MQTT
 - M954 STRING               - Send STRING to MQTT and wait for user
