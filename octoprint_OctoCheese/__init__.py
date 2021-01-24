@@ -169,7 +169,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 
 	# Used by M952
 	def cheeseTempPauseCallback(self):
-		if (self._cheeseTempSensor != "" or self._cheeseTemp == -1):
+		if (self._cheeseTempSensor == "" or self._cheeseTemp == -1):
 			self.cheeseTempPauseEnd()
 		temps = self._printer.get_current_temperatures()
 		if temps != {}:
