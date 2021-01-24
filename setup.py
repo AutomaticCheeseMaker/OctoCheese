@@ -17,7 +17,7 @@
 plugin_identifier = "OctoCheese"
 plugin_package = "octoprint_OctoCheese"
 plugin_name = "OctoPrint-OctoCheese"
-plugin_version = "0.0.2"
+plugin_version = "0.0.3"
 plugin_description = """OctoPrint plugin to manage a stirring device"""
 plugin_author = "Thomas Preece"
 plugin_author_email = "thomaspreece10@gmail.com"

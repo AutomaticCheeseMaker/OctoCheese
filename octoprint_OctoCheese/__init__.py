@@ -26,7 +26,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 		self.mqtt_publish = lambda *args, **kwargs: None
 		self.mqtt_subscribe = lambda *args, **kwargs: None
 
-	def catch_m950(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
+	def catch_gcode(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
 		retCmd = cmd
 		# M950 S1 - Turn Stirrer on
 		# M950 S0 - Turn Stirrer off
@@ -266,7 +266,8 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 
 	def get_template_configs(self):
 		return [
-			dict(type="settings", name="OctoCheese", custom_bindings=False)
+			dict(type="settings", name="OctoCheese", custom_bindings=False),
+			dict(type="controls", custom_bindings=False)
 		]
 
 	def get_settings_defaults(self):
@@ -329,5 +330,5 @@ def __plugin_load__():
 	global __plugin_hooks__
 	__plugin_hooks__ = {
 		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
-		"octoprint.comm.protocol.gcode.queuing": __plugin_implementation__.catch_m950,
+		"octoprint.comm.protocol.gcode.queuing": __plugin_implementation__.catch_gcode,
 	}
