@@ -69,7 +69,6 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 				retCmd = "M118 E1 Sleeping for {0}s".format(pauseInSeconds)
 				if self._cheesePause != None:
 					self.cheesePauseEnd()
-				self.mqtt_publish(MQTT_OCTOCHEESE_MESSAGE, "Waiting for {0}s".format(pauseInSeconds))
 				self.mqtt_publish_with_timestamp(MQTT_OCTOCHEESE_WAITING_TIME, {
 					"time": pauseInSeconds,
 					"active": True
@@ -94,7 +93,6 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 					self.cheeseTempPauseEnd()
 				self._cheeseTemp = int(parts[1][1:])
 				self._cheeseTempSensor = parts[1][:1]
-				self.mqtt_publish(MQTT_OCTOCHEESE_MESSAGE, "Waiting for {0}C on {1}".format(self._cheeseTemp, self._cheeseTempSensor))
 				self.mqtt_publish_with_timestamp(MQTT_OCTOCHEESE_WAITING_HEAT, {
 					"type": self._cheeseTempSensor,
 					"temperature": self._cheeseTemp,
