@@ -5,6 +5,7 @@ import octoprint.plugin
 from octoprint.util import RepeatedTimer, ResettableTimer
 
 MQTT_OCTOCHEESE_PAUSED="octoPrint/plugin/OctoCheese/paused"
+MQTT_OCTOCHEESE_STIRRING="octoPrint/plugin/OctoCheese/stirring"
 MQTT_OCTOCHEESE_MESSAGE="octoPrint/plugin/OctoCheese/message"
 MQTT_OCTOCHEESE_WAITING_TIME="octoPrint/plugin/OctoCheese/waiting_time"
 MQTT_OCTOCHEESE_WAITING_HEAT="octoPrint/plugin/OctoCheese/waiting_heat"
@@ -39,6 +40,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 				retCmd = "M118 E1 Stirring ON"
 				self._stirringOn = True
 				self.restartStirringTimer()
+				self.mqtt_publish(MQTT_OCTOCHEESE_STIRRING, 1)
 			elif cmd == "M950 S0":
 				self._logger.debug(u"Stirring OFF")
 				stepper = self._settings.get(['stepper'])
@@ -48,6 +50,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 				]
 				self._stirringOn = False
 				self.restartStirringTimer()
+				self.mqtt_publish(MQTT_OCTOCHEESE_STIRRING, 0)
 			else:
 				self._logger.debug(u"Invalid Stirring Command")
 				retCmd = "M118 E1 Invalid M950 command"
