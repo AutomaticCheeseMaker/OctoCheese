@@ -1,11 +1,10 @@
 ; OctoCheese GCode for FarmhouseCheddar Cheese described at https://www.youtube.com/watch?v=IsmW_XRXCGg
 
-2 tbsp Cheese Salt
-
-M954 Add 8L of Milk;
-M954 Put 1 tsp Calcium Chloride diluted with milk in Dispencer;
-M954 Put 1 tsp liquid rennet in Dispencer;
-M954 Put 1/8 tsp Mesophilic Culture in Dispencer;
+;M954 Add 8L of Milk;
+;M954 Put 1 tsp Calcium Chloride diluted with milk in Dispencer;
+;M954 Put 1 tsp liquid rennet in Dispencer;
+;M954 Put 1/8 tsp Mesophilic Culture in Dispencer;
+M954 Begin Cheese Making!;
 
 M955 S1 CALCIUM_CHLORIDE;
 M950 S1; Start stirring
