@@ -54,15 +54,15 @@ M950 S1; Start stirring
 ; Heat to 37C over 30m
 M140 S31; Heat to 31C
 M951 S300; Wait for 5 mins
-M140 S33; Heat to 32C
+M140 S33; Heat to 33C
 M951 S300; Wait for 5 mins
-M140 S34; Heat to 33C
+M140 S34; Heat to 34C
 M951 S300; Wait for 5 mins
-M140 S35; Heat to 34C
+M140 S35; Heat to 35C
 M951 S300; Wait for 5 mins
-M140 S36; Heat to 35C
+M140 S36; Heat to 36C
 M951 S300; Wait for 5 mins
-M140 S37; Heat to 36C
+M140 S37; Heat to 37C
 M951 S300; Wait for 5 mins
 
 M950 S0; Stop stirring

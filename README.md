@@ -1,6 +1,12 @@
 # OctoPrint-OctoCheese
 
-OctoPrint Plugin that controls a cheese making device running Marlin. Provides several new Gcode commands for stirring, wait for x seconds, wait for x temperature and sending notifications.
+OctoPrint Plugin that controls a cheese making device running Marlin. Provides several new Gcode commands for stirring, wait for x seconds, wait for x temperature and sending notifications to MQTT.
+
+Sending notifications to MQTT allows you to integrate with Home Assistant to get notifications on your mobile or via your home's smart devices.
+
+![OctoCheese and Home Assistant](./images/OctoCheese.png)
+
+The above image shows my current setup with OctoPrint + OctoCheese running on the left browser window and my Home Assistant dashboard on the right browser window.
 
 ## Setup
 
@@ -18,9 +24,9 @@ https://github.com/thomaspreece/OctoCheese/archive/master.zip
 ## Configuration
 
 Configure via the OctoPrint settings UI. By default the plugin assumes:
-- The X Axis is the stirring stepper 
+- The X Axis is the stirring stepper
 - The water heater is plugged into the "Bed" heater port
-- The water heater temperature is plugged into the "Bed" temperature port 
+- The water heater temperature is plugged into the "Bed" temperature port
 - The Milk temperature is plugged into the "Hotend" temperature port
 
 ## Gcode
