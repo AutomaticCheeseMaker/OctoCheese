@@ -1,0 +1,105 @@
+sensor:
+  - platform: mqtt
+    name: "OctoCheese Message"
+    state_topic: "octoPrint/plugin/OctoCheese/message"
+  - platform: mqtt
+    name: "OctoCheese Water Temperature"
+    state_topic: "octoPrint/temperature/bed"
+    value_template: "{{ value_json.actual }}"
+    unit_of_measurement: "C"
+  - platform: mqtt
+    name: "OctoCheese Target Water Temperature"
+    state_topic: "octoPrint/temperature/bed"
+    value_template: "{{ value_json.target }}"
+    unit_of_measurement: "C"
+  - platform: mqtt
+    name: "OctoCheese Cheese Temperature"
+    state_topic: "octoPrint/temperature/tool0"
+    value_template: "{{ value_json.actual }}"
+    unit_of_measurement: "C"
+  - platform: mqtt
+    name: "OctoCheese Progress"
+    state_topic: "octoPrint/progress/printing"
+    value_template: "{{ value_json.progress }}"
+    unit_of_measurement: "%"
+  - platform: mqtt
+    name: "OctoCheese Waiting Time"
+    state_topic: "octoPrint/plugin/OctoCheese/waiting_time"
+    value_template: >-
+          {% set time = value_json.time %}
+          {% set seconds = (time % 60) | int %}
+          {% set minutes = ((time % 3600) / 60) | int %}
+          {% set hours = ((time % 86400) / 3600) | int %}
+
+          {%- if time < 60 -%}
+            {{ seconds }}s
+          {%- else -%}
+            {%- if hours > 0 -%}
+              {{ hours }}h, {{ minutes }}m, {{ seconds }}s
+            {%- else -%}
+              {{ minutes }}m, {{ seconds }}s
+            {%- endif -%}
+          {%- endif -%}
+  - platform: mqtt
+    name: "OctoCheese Waiting Temperature"
+    state_topic: "octoPrint/plugin/OctoCheese/waiting_heat"
+    value_template: "{{ value_json.temperature }}"
+    unit_of_measurement: "C"
+  - platform: mqtt
+    name: "OctoCheese Waiting Temperature Type"
+    state_topic: "octoPrint/plugin/OctoCheese/waiting_heat"
+    value_template: "{{ value_json.type }}"
+  - platform: mqtt
+    name: "OctoCheese Recipe"
+    state_topic: "octoPrint/progress/printing"
+    value_template: "{{ value_json.path }}"
+
+binary_sensor:
+  - platform: mqtt
+    name: "OctoCheese Paused"
+    state_topic: "octoPrint/plugin/OctoCheese/paused"
+    payload_on: 1
+    payload_off: 0
+  - platform: mqtt
+    name: "OctoCheese Stirring"
+    state_topic: "octoPrint/plugin/OctoCheese/stirring"
+    payload_on: 1
+    payload_off: 0
+  - platform: mqtt
+    name: "OctoCheese Waiting on Time"
+    state_topic: "octoPrint/plugin/OctoCheese/waiting_time"
+    value_template: "{{ value_json.active }}"
+    payload_on: true
+    payload_off: false
+  - platform: mqtt
+    name: "OctoCheese Waiting on Temperature"
+    state_topic: "octoPrint/plugin/OctoCheese/waiting_heat"
+    value_template: "{{ value_json.active }}"
+    payload_on: true
+    payload_off: false
+
+automation:
+  - alias: OctoCheese Message -> Mobile
+    trigger:
+    - platform: mqtt
+      topic: "octoPrint/plugin/OctoCheese/message"
+    condition: []
+    action:
+    - data_template:
+        message: '{{ trigger.payload }}'
+        title: OctoCheese
+        data:
+          clickAction: "/lovelace/cheese"
+          channel: OctoCheese
+          tag: OctoCheese
+          importance: high
+      service: notify.YOUR_MOBILE_ID_HERE
+script:
+  octocheese_continue:
+    alias: "OctoCheese Continue"
+    description: "Continues OctoCheese Job"
+    sequence:
+    - service: mqtt.publish
+      data:
+        topic: "octoPrint/plugin/OctoCheese/paused"
+        payload: 0

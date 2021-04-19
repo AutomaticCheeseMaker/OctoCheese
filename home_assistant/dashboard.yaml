@@ -1,0 +1,66 @@
+title: Home Assistant
+views:
+  - badges: []
+    cards:
+      - entity: sensor.octocheese_progress
+        max: 100
+        min: 0
+        severity:
+          green: 0
+          red: 0
+          yellow: 0
+        theme: default
+        type: gauge
+        name: Progress
+      - entity: binary_sensor.octocheese_paused
+        hold_action:
+          action: more-info
+        name: Continue Recipe
+        show_icon: true
+        show_name: true
+        tap_action:
+          action: call-service
+          service: script.octocheese_continue
+        type: entity-button
+      - type: conditional
+        conditions:
+          - entity: binary_sensor.octocheese_waiting_on_temperature
+            state: 'on'
+        card:
+          type: entities
+          entities:
+            - entity: sensor.octocheese_waiting_temperature
+              name: Temperature
+            - entity: sensor.octocheese_waiting_temperature_type
+              name: Type
+          title: Waiting on Temperature
+      - type: conditional
+        conditions:
+          - entity: binary_sensor.octocheese_waiting_on_time
+            state: 'on'
+        card:
+          type: entities
+          entities:
+            - entity: sensor.octocheese_waiting_time
+              name: Time
+          title: Waiting on Time
+      - type: entities
+        entities:
+          - entity: sensor.octocheese_message
+            name: Message
+          - entity: sensor.octocheese_water_temperature
+            name: Water
+          - entity: sensor.octocheese_target_water_temperature
+            name: Water (Target)
+          - entity: sensor.octocheese_cheese_temperature
+            name: Cheese
+          - entity: binary_sensor.octocheese_stirring
+          - entity: sensor.octocheese_recipe
+            name: Recipe
+      - type: logbook
+        entities:
+          - sensor.octocheese_message
+        hours_to_show: 24
+        title: Message History
+    path: cheese
+    title: Cheese
