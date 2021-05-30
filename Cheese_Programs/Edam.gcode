@@ -1,11 +1,14 @@
 ; OctoCheese GCode for Edam Cheese described at https://www.youtube.com/watch?v=7yMmovpXyW8
 
-2 tbsp Cheese Salt
+; Other Ingredients
+; 2 tbsp Cheese Salt
+; Cheese wax
+; Brine Solution
 
-;M954 Add 10L of Milk;
-;M954 Put 1 tsp Calcium Chloride diluted with milk in Dispencer;
-;M954 Put 1/2 tsp liquid rennet in Dispencer;
-;M954 Put 1/8 tsp Mesophilic Culture in Dispencer;
+M954 Add 10L of Milk;
+M954 Put 1 tsp Calcium Chloride diluted with milk in Dispencer;
+M954 Put 1/2 tsp liquid rennet in Dispencer;
+M954 Put 1/8 tsp Mesophilic Culture in Dispencer;
 M954 Begin Cheese Making!;
 
 M950 S1; Start stirring
@@ -28,14 +31,12 @@ M951 S60; Stir for a minute
 M950 S0; Stop stirring
 
 M951 S2400; Wait for 40 mins
-M954 Cut the curd into 1.25cm (1/2 inch) cubes;
+M954 Cut the curd into 1.25cm (1/2 inch) cubes AND Boil about 5L of water and let cool;
 
 M950 S1; Start stirring
 
-M953 Boil about 5L of water and let cool;
-
 ; Over 30 mins bring up to 33C
-M140 S31; Heat to 31C
+M140 S32; Heat to 32C
 M951 S600; Wait for 10 mins
 M140 S32; Heat to 32C
 M951 S600; Wait for 10 mins

@@ -109,7 +109,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 				if len(parts) > 1:
 					stringToSend = " ".join(parts[1:])
 					self.mqtt_publish(MQTT_OCTOCHEESE_MESSAGE, stringToSend)
-					retCmd = "M118 E1 Sent to MQTT: {0}".format(stringToSend)
+					retCmd = "M118 E1 Sent Message to MQTT"
 				else:
 					self._logger.debug(u"Invalid Text")
 					retCmd = "M118 E1 Invalid M953 command"
@@ -123,7 +123,7 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 					self.mqtt_publish(MQTT_OCTOCHEESE_MESSAGE, stringToSend)
 					self.mqtt_publish(MQTT_OCTOCHEESE_PAUSED, 1)
 					self._printer.set_job_on_hold(True)
-					retCmd = "M118 E1 Waiting for user to finish: {0}".format(stringToSend)
+					retCmd = "M118 E1 Sent Message to MQTT and waiting"
 				else:
 					self.mqtt_publish(MQTT_OCTOCHEESE_PAUSED, 0)
 					self._printer.set_job_on_hold(False)
@@ -282,8 +282,20 @@ class OctoCheese(octoprint.plugin.AssetPlugin,
 
 	def on_shutdown(self):
 		self._logger.info(u"Stopping OctoCheese")
+		self._printer.set_job_on_hold(False)
 		self._stirringOn = False
-		self.restartStirringTimer()
+		if self._stirringTimer:
+			self._stirringTimer.cancel()
+			self._stirringTimer = None
+		if self._cheesePause:
+			self._cheesePause.cancel()
+			self._cheesePause = None
+		if self._cheeseTempPause:
+			self._cheeseTempPause.cancel()
+			self._cheeseTempPause = None
+			self._cheeseTemp = -1
+			self._cheeseTempCount = 0
+			self._cheeseTempSensor = ""
 
 
 	##-- AssetPlugin hooks
